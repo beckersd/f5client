@@ -6,5 +6,4 @@ public class F5BClient2Runner {
         F5BClient2 mainApp = new F5BClient2();
         mainApp.start();
     }
-    
 }
