@@ -170,18 +170,21 @@ public class Handler {
             
             
         int j=200;
-        for (int i = 1; i < 20; ++i) {
-            SoftTone.softToneWrite(PIEZO_PIN, j);
-            //System.out.printf("%3d\n", j);
-            j = j+100;
-            try {
-                Thread.sleep(200);
-            } catch (InterruptedException ex) {
-                Logger.getLogger(Handler.class.getName()).log(Level.SEVERE, null, ex);
+        while (true){
+            j=200;
+            for (int i = 1; i < 20; ++i) {
+                SoftTone.softToneWrite(PIEZO_PIN, j);
+                //System.out.printf("%3d\n", j);
+                j = j+100;
+                try {
+                    Thread.sleep(200);
+                } catch (InterruptedException ex) {
+                    Logger.getLogger(Handler.class.getName()).log(Level.SEVERE, null, ex);
+                }
             }
-        }
             
-        SoftTone.softToneStop(PIEZO_PIN);
+        }            
+        //SoftTone.softToneStop(PIEZO_PIN);
     }
     
     public void playVario (int updown) {
