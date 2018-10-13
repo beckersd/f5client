@@ -275,12 +275,12 @@ public class F5BClient2 {
                                 //try to connect again to see if session is still alive
                                 switch (clientType) {
                                     case F5CLIENT:
-                                        //System.out.println("Connecting to F5Client");
+                                        System.out.println("Connecting to F5Client");
                                         aliveSession = container.connectToServer(f5ClientEndpoint, connection);
                                         aliveSession.close();
                                         break;
                                     case SENSORCLIENT:
-                                        //System.out.println("Connecting to SensorClient");
+                                        System.out.println("Connecting to SensorClient");
                                         aliveSession = container.connectToServer(sensorClientEndpoint, connection);
                                         aliveSession.close();
                                         break;
