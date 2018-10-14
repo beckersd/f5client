@@ -257,6 +257,7 @@ public class F5BClient2 {
                             case SENSORCLIENT:
                                 System.out.println("Initialising Sensorclient: " + connection + "...");
                                 session = container.connectToServer(sensorClientEndpoint, connection);
+                                sensorClientEndpoint.initialConnectOk = true;
                                 break;
                             }
                             
@@ -267,7 +268,7 @@ public class F5BClient2 {
                             System.out.println("Unable to connect!");
                             lcd_gpio_Handler.writeLineWithDate("-- No Connect --");
                         } catch (IOException ex) {
-                            lcd_gpio_Handler.writeLineWithDate("No Wrong Network");
+                            lcd_gpio_Handler.writeLineWithDate("No-Bad Netw/Sens");
                         }
                         while (session != null && session.isOpen()) {
                             Thread.sleep(10000);
@@ -282,6 +283,7 @@ public class F5BClient2 {
                                     case SENSORCLIENT:
                                         //System.out.println("Connecting to SensorClient");
                                         aliveSession = container.connectToServer(sensorClientEndpoint, connection);
+                                        sensorClientEndpoint.initialConnectOk = true;
                                         aliveSession.close();
                                         break;
                                 }    

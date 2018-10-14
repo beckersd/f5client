@@ -17,6 +17,7 @@ public class SensorWebSocketClient extends Endpoint{
     private String altitude;
     private long sensorReadTime;
     private int telemetryNOkCounter;
+    public boolean initialConnectOk;
     private final int telemetryNotOkMaxCounter = 20;
     
     SensorWebSocketClient(Handler lcd_gpio_Handler) {
@@ -27,13 +28,18 @@ public class SensorWebSocketClient extends Endpoint{
         formatter = new SimpleDateFormat("HH:mm:ss");
         wMin = "N/A";
         altitude = "N/A";
+        initialConnectOk = false;
         sensorReadTime = System.currentTimeMillis()-10000;  //init to something 10 secs ago
         lcd_gpio_Handler.interrupt_Listener.interruptable_Thread2 = new Thread(){
             @Override
             public void run() {
                 try {
                        //lcd_gpio_Handler.varioTest();
-                       Thread.sleep(7000);
+                       while (!initialConnectOk) {
+                           System.out.println("initialConnect NOK!!");
+                           Thread.sleep(7000);
+                       }
+                       
                     while (true) {
                         //System.out.println("TimeDiff: " + Long.toString(System.currentTimeMillis() - sensorReadTime));
                         if (System.currentTimeMillis() - sensorReadTime < 5000) {
