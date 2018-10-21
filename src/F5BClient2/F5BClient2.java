@@ -22,6 +22,7 @@ public class F5BClient2 {
     public final static String SCANNER = "Scanner";
     public final static String TIME = "Time";
     public final static String VARIO = "Vario";
+    public final static String TESTSOUND = "Sound Test";
     
     public final static String F5_CLIENT_CONNECTION_URI = "ws://f5.be/ws/client";
     public final static String SENSOR_CONNECTION_URI = "ws://localhost:1880/ws/sensor";
@@ -81,7 +82,12 @@ public class F5BClient2 {
                     System.out.println("Running " + VARIO + "...");
                     //runVario();
                     client(SENSOR_CONNECTION_URI, ClientType.SENSORCLIENT);
-                    break;  
+                    break;
+                case TESTSOUND :
+                    selecter = MENU_SELECTER;
+                    System.out.println("Running " + TESTSOUND + "...");
+                    runSoundTest();
+                    break;
             }
         }
         
@@ -115,16 +121,15 @@ public class F5BClient2 {
         }
     }
     
-    private void runVario() {
+    private void runSoundTest() {
         lcd_gpio_Handler.interrupt_Listener.interruptable_Thread = new Thread(){
             public void run() {
                 try {
                     while (true) {
                         lcd_gpio_Handler.varioTest();
-                        client(SENSOR_CONNECTION_URI, ClientType.SENSORCLIENT);
                     } 
                 } catch (Exception e) {
-                    System.out.println("Interrupted " + VARIO);
+                    System.out.println("Interrupted " + TESTSOUND);
                     SoftTone.softToneStop(lcd_gpio_Handler.PIEZO_PIN);
                     //e.printStackTrace();
                 }

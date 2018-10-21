@@ -75,6 +75,9 @@ public class Handler {
                         selectedOption = F5BClient2.TIME;
                         writeMenuOption(formatTextToFit1Line(F5BClient2.TIME));
                         
+                        selectedOption = F5BClient2.TESTSOUND;
+                        writeMenuOption(formatTextToFit1Line(F5BClient2.TESTSOUND));
+                        
                         selectedOption = F5BClient2.EXIT;
                         writeMenuOption(formatTextToFit1Line(F5BClient2.EXIT));
                         
@@ -162,12 +165,9 @@ public class Handler {
         Thread.sleep(2000);
     }
     
-    public void varioTest() {
+    public void varioTest() throws InterruptedException {
         SoftTone.softToneCreate(PIEZO_PIN);
-        Lcd.lcdHome(lcdHandle);
-        Lcd.lcdPosition (lcdHandle, 0, 0) ; 
-        Lcd.lcdPuts (lcdHandle, "Vario Sounds....") ;
-            
+        writeLineWithDate("Vario Sounds...");
             
         int j=200;
         //while (true){
@@ -176,15 +176,21 @@ public class Handler {
                 SoftTone.softToneWrite(PIEZO_PIN, j);
                 //System.out.printf("%3d\n", j);
                 j = j+100;
-                try {
-                    Thread.sleep(200);
-                } catch (InterruptedException ex) {
-                    Logger.getLogger(Handler.class.getName()).log(Level.SEVERE, null, ex);
-                }
+                Thread.sleep(200);
             }
+            SoftTone.softToneStop(PIEZO_PIN);
+            Thread.sleep(500);
+            
+            writeLineWithDate("Low Sound...");
+            varioMin3();
+            varioMin3();
+            Thread.sleep(500);
+            writeLineWithDate("Up Sound...");
+            varioPlus3();
+            varioPlus3();
             
         //}            
-        SoftTone.softToneStop(PIEZO_PIN);
+        
     }
     
     public void playVario (int updown) {

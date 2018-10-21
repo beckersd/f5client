@@ -23,7 +23,6 @@ public class SensorWebSocketClient extends Endpoint{
     SensorWebSocketClient(Handler lcd_gpio_Handler) {
         //this.lcdHandle=lcdHandle;
         this.lcd_gpio_Handler = lcd_gpio_Handler;
-        //lcd_gpio_Handler.varioTest();
         telemetryNOkCounter = 0;
         formatter = new SimpleDateFormat("HH:mm:ss");
         wMin = "N/A";
