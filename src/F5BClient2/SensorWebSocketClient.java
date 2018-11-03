@@ -149,15 +149,15 @@ public class SensorWebSocketClient extends Endpoint{
             switch (sensorReading.sensorType) {
                 case 3:
                     lcd_gpio_Handler.playVario(sensorReading.sensorValue);
-                    //System.out.println("VARIO Message: " + sensorReadTime);
+                    //System.out.println("VARIO Message: " + sensorReadTime + " // " + sensorReading.sensorValue);
                     break;
                 case 12:
                     wMin = Integer.toString(sensorReading.sensorValue);
-                    //System.out.println("WMIN Message: " + sensorReadTime);
+                    //System.out.println("WMIN Message: " + sensorReadTime + " // " + sensorReading.sensorValue);
                     break;
                 case 8:
                     altitude = Integer.toString(sensorReading.sensorValue);
-                    //System.out.println("ALT Message: " + sensorReadTime);
+                    //System.out.println("ALT Message: " + sensorReadTime + " // " + sensorReading.sensorValue);
                     break;
             }
             return sensorReading;
