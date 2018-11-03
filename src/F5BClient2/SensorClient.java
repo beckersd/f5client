@@ -14,13 +14,9 @@ import com.pi4j.io.serial.StopBits;
 import com.pi4j.wiringpi.Lcd;
 import java.io.IOException;
 import java.nio.ByteBuffer;
-import java.text.SimpleDateFormat;
-import javax.websocket.Endpoint;
-import javax.websocket.EndpointConfig;
-import javax.websocket.MessageHandler;
-import javax.websocket.Session;
+import java.text.SimpleDateFormat;import javax.websocket.Session;
 
-public class SensorClient extends Endpoint{
+public class SensorClient {
     private Session session;
     private final Handler lcd_gpio_Handler;
     private final SimpleDateFormat formatter;
@@ -30,6 +26,7 @@ public class SensorClient extends Endpoint{
     private int telemetryNOkCounter;
     public boolean serialConnectOk;
     private final int telemetryNotOkMaxCounter = 20;
+    private final long screenUpdateInterval = 2000;
     byte[] message;
     String originalValue;
     
@@ -49,13 +46,15 @@ public class SensorClient extends Endpoint{
             @Override
             public void run() {
                 try {
+                    lcd_gpio_Handler.writeLineWithDate("Connecting Radio");
+                    
                     final Serial serial = SerialFactory.createInstance();
                     serial.addListener(new SerialDataEventListener() {
                         @Override
                         public void dataReceived(SerialDataEvent event) {
                             sensorReadTime = System.currentTimeMillis();
                             try {
-                                System.out.println("[HEX DATA]   " + event.getHexByteString());
+                                //System.out.println("[HEX DATA]   " + event.getHexByteString());
                                 //System.out.println("[Bytes]    " + event.getBytes());
                                 //System.out.println("[ASCII DATA] " + event.getAsciiString());
                                 
@@ -66,7 +65,7 @@ public class SensorClient extends Endpoint{
                                 for(int i = 0; i < l; i++) {
                                    originalValue = originalValue + message[i]; 
                                 }
-                                System.out.println("Message: " + originalValue);  
+                                //System.out.println("Message: " + originalValue);  
 
                                 ByteBuffer unescapedMessage = unesc(message);
                                 unescapedMessage.flip();
@@ -76,10 +75,10 @@ public class SensorClient extends Endpoint{
                                 SensorReading sensValue1 = null;
                                 SensorReading sensValue2 = null;
                                 if (l > 19 && message[0] == 0x02 && message[l - 1] == 0x03 && checks(unescapedMessage)) {
-                                    System.out.println("Message OK");
+                                    //System.out.println("Message OK");
                                     unescapedMessage.rewind();
                                     if (message[7] == 6) {
-                                        System.out.println("7th position of original message = 6, so telemetry is being received by transmitter");
+                                        //System.out.println("7th position of original message = 6, so telemetry is being received by transmitter");
                                         unescapedMessage.position(8);
                                         //Long when = timBytes.getWhen();
 
@@ -93,7 +92,7 @@ public class SensorClient extends Endpoint{
                                         telemetryNotOkSetter();
                                     }
                                 } else {
-                                    System.out.println("Message NOT OK");
+                                    //System.out.println("Message NOT OK");
                                     telemetryNotOkSetter();
                                 }
                                 
@@ -115,7 +114,7 @@ public class SensorClient extends Endpoint{
                                       .stopBits(StopBits._1)
                                       .flowControl(FlowControl.NONE);
 
-                                System.out.println(" Connecting to: " + config.toString() +" Data received on serial port will be displayed below.");
+                                System.out.println(" Connecting to: " + config.toString() +"...");
 
                                 // open the default serial device/port with the configuration settings
                                 serial.open(config);
@@ -129,22 +128,21 @@ public class SensorClient extends Endpoint{
                         }
                                                 
                         //System.out.println("TimeDiff: " + Long.toString(System.currentTimeMillis() - sensorReadTime));
-                        if (System.currentTimeMillis() - sensorReadTime < 5000) {
-                            System.out.println("Updating screen with WMin/Alt");
+                        if (System.currentTimeMillis() - sensorReadTime < 2000) {
+                            //System.out.println("Updating screen with WMin/Alt");
                             Lcd.lcdClear(lcd_gpio_Handler.lcdHandle);
                             Lcd.lcdPosition (lcd_gpio_Handler.lcdHandle, 0, 0);
                             Lcd.lcdPuts (lcd_gpio_Handler.lcdHandle, Handler.formatTextToFit1Line("WMin:" + wMin));
                             Lcd.lcdPosition (lcd_gpio_Handler.lcdHandle, 0, 1);
                             Lcd.lcdPuts (lcd_gpio_Handler.lcdHandle, Handler.formatTextToFit1Line("Alt:" + altitude));
-                            Thread.sleep(5000);
+                            Thread.sleep(screenUpdateInterval);
                         } else {
                             Lcd.lcdClear(lcd_gpio_Handler.lcdHandle);
                             Lcd.lcdPosition (lcd_gpio_Handler.lcdHandle, 0, 0);
                             Lcd.lcdPuts (lcd_gpio_Handler.lcdHandle, Handler.formatTextToFit1Line("Last WMin:" + wMin));
                             Lcd.lcdPosition (lcd_gpio_Handler.lcdHandle, 0, 1);
                             Lcd.lcdPuts (lcd_gpio_Handler.lcdHandle, Handler.formatTextToFit1Line("Sensor Dead"));
-                            Thread.sleep(5000);
-                            
+                            Thread.sleep(screenUpdateInterval);
                         }
                     }
                     
@@ -158,53 +156,6 @@ public class SensorClient extends Endpoint{
             lcd_gpio_Handler.interrupt_Listener.interruptable_Thread.join();
         } catch (InterruptedException e) {
         }
-    }
-    
-    public void onOpen(Session sn, EndpointConfig ec) {
-        //System.out.println("SensorWebSocketClient opened");
-        this.session = sn;
-        this.session.addMessageHandler(new MessageHandler.Whole<byte[]>() {
-            @Override
-            public void onMessage(byte[] message) {
-                sensorReadTime = System.currentTimeMillis();
-                //System.out.println("MessageTime: " + sensorReadTime);
-                String originalValue = "";
-                int l = message.length;
-                for(int i = 0; i < l; i++) {
-                   originalValue = originalValue + message[i]; 
-                }
-                //System.out.println("Message: " + originalValue);  
-                
-                ByteBuffer unescapedMessage = unesc(message);
-                unescapedMessage.flip();
-                unescapedMessage.rewind();
-                byte[] sens1 = new byte[3];
-                byte[] sens2 = new byte[3];
-                SensorReading sensValue1 = null;
-                SensorReading sensValue2 = null;
-                if (l > 19 && message[0] == 0x02 && message[l - 1] == 0x03 && checks(unescapedMessage)) {
-                    //System.out.println("Message OK");
-                    unescapedMessage.rewind();
-                    if (message[7] == 6) {
-                        //System.out.println("7th position of original message = 6, so telemetry is being received by transmitter");
-                        unescapedMessage.position(8);
-                        //Long when = timBytes.getWhen();
-                        
-                        unescapedMessage.get(sens1, 0, 3);
-                        sensValue1 = treatSensor(sens1);
-                        
-                        unescapedMessage.get(sens2, 0, 3);
-                        sensValue2 = treatSensor(sens2);
-                    } else {
-                        //System.out.println("No telemetry from receiver!");
-                        telemetryNotOkSetter();
-                    }
-                } else {
-                    //System.out.println("Message NOT OK");
-                    telemetryNotOkSetter();
-                }
-            }
-        });
     }
     
     private void telemetryNotOkSetter() {
