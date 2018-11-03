@@ -25,7 +25,6 @@ public class F5BClient2 {
     public final static String TESTSOUND = "Sound Test";
     
     public final static String F5_CLIENT_CONNECTION_URI = "ws://f5.be/ws/client";
-    public final static String SENSOR_CONNECTION_URI = "ws://localhost:1880/ws/sensor";
         
     Handler lcd_gpio_Handler;
     
@@ -33,7 +32,7 @@ public class F5BClient2 {
     
     private static WebSocketContainer container;
     private static F5WebSocketClient f5ClientEndpoint;
-    private static SensorWebSocketClient sensorClientEndpoint;
+    private static SensorClient sensorClient;
     
     private enum ClientType {F5CLIENT, SENSORCLIENT}
     
@@ -65,7 +64,7 @@ public class F5BClient2 {
                 case CLIENT :
                     selecter = MENU_SELECTER;
                     System.out.println("Running " + CLIENT + "...");
-                    client(F5_CLIENT_CONNECTION_URI, ClientType.F5CLIENT);
+                    client(F5_CLIENT_CONNECTION_URI);
                     break;
                 case SCANNER :
                     selecter = MENU_SELECTER;
@@ -80,8 +79,7 @@ public class F5BClient2 {
                 case VARIO :
                     selecter = MENU_SELECTER;
                     System.out.println("Running " + VARIO + "...");
-                    //runVario();
-                    client(SENSOR_CONNECTION_URI, ClientType.SENSORCLIENT);
+                    runVario();
                     break;
                 case TESTSOUND :
                     selecter = MENU_SELECTER;
@@ -204,20 +202,16 @@ public class F5BClient2 {
         }
     }
     
-    private void client(String Connection, ClientType clientType) throws InterruptedException, URISyntaxException {
+    private void runVario() throws InterruptedException, URISyntaxException {
+        SensorClient sensorClient = new SensorClient(lcd_gpio_Handler);
+        sensorClient.start();
+    }
+    
+    private void client(String Connection) throws InterruptedException, URISyntaxException {
         container = ContainerProvider.getWebSocketContainer();
-        switch (clientType) {
-            case F5CLIENT:
-                //System.out.println("Initialising F5Client...");
-                f5ClientEndpoint = new F5WebSocketClient(lcd_gpio_Handler.lcdHandle);
-                break;
+        
+        f5ClientEndpoint = new F5WebSocketClient(lcd_gpio_Handler.lcdHandle);
                 
-            case SENSORCLIENT:
-                //System.out.println("Initialising Sensorclient...");
-                //lcd_gpio_Handler.varioTest();
-                sensorClientEndpoint = new SensorWebSocketClient(lcd_gpio_Handler);
-                break;
-        }
         connection = new URI(Connection);
          
         lcd_gpio_Handler.interrupt_Listener.interruptable_Thread = new Thread(){
@@ -229,42 +223,28 @@ public class F5BClient2 {
                 try {
                     while (session == null || !session.isOpen()) {
                         try {
-                            switch (clientType) {
-                                case F5CLIENT:
-                                    wifi = NetworkFunctions.getSSIDName();
-                                    switch (wifi) {
-                                        case "off/any":
-                                            throw new IOException("No Network");
-                                        case "f5":
-                                            ip = NetworkFunctions.getIP();
-                                            lcd_gpio_Handler.writeLineWithDate("ip:" + ip);
-                                            //throw new IOException("TEMPLOOP");
-                                            break;
-                                        case "f52":
-                                            ip = NetworkFunctions.getIP();
-                                            lcd_gpio_Handler.writeLineWithDate("ip:" + ip);
-                                            break;
-                                        default:
-                                            throw new IOException("Wrong Network");
-                                    }
+                            wifi = NetworkFunctions.getSSIDName();
+                            switch (wifi) {
+                                case "off/any":
+                                    throw new IOException("No Network");
+                                case "f5":
+                                    ip = NetworkFunctions.getIP();
+                                    lcd_gpio_Handler.writeLineWithDate("ip:" + ip);
+                                    //throw new IOException("TEMPLOOP");
                                     break;
+                                case "f52":
+                                    ip = NetworkFunctions.getIP();
+                                    lcd_gpio_Handler.writeLineWithDate("ip:" + ip);
+                                    break;
+                                default:
+                                    throw new IOException("Wrong Network");
                             }
-
+                                    
                             tries++;
                             System.out.println("Connecting try: " + tries.toString() + "...");
                             lcd_gpio_Handler.writeLineWithDate("-- Attempt " + (tries.toString() + " ----").substring(0, 4));
-                            switch (clientType) {
-                                case F5CLIENT:
-                                System.out.println("Initialising F5Client...");
-                                session = container.connectToServer(f5ClientEndpoint, connection);
-                                break;
-                
-                            case SENSORCLIENT:
-                                System.out.println("Initialising Sensorclient: " + connection + "...");
-                                session = container.connectToServer(sensorClientEndpoint, connection);
-                                sensorClientEndpoint.initialConnectOk = true;
-                                break;
-                            }
+                            System.out.println("Initialising F5Client...");
+                            session = container.connectToServer(f5ClientEndpoint, connection);
                             
                             tries = 0;
                             System.out.println("Connected to server");
@@ -279,20 +259,9 @@ public class F5BClient2 {
                             Thread.sleep(10000);
                             try {
                                 //try to connect again to see if session is still alive
-                                switch (clientType) {
-                                    case F5CLIENT:
-                                        //System.out.println("Connecting to F5Client");
-                                        aliveSession = container.connectToServer(f5ClientEndpoint, connection);
-                                        aliveSession.close();
-                                        break;
-                                    case SENSORCLIENT:
-                                        //System.out.println("Connecting to SensorClient");
-                                        aliveSession = container.connectToServer(sensorClientEndpoint, connection);
-                                        sensorClientEndpoint.initialConnectOk = true;
-                                        aliveSession.close();
-                                        break;
-                                }    
-                                
+                                //System.out.println("Connecting to F5Client");
+                                aliveSession = container.connectToServer(f5ClientEndpoint, connection);
+                                aliveSession.close();
                                 //System.out.println("All is well: Still connected!");
                             } catch (DeploymentException ex) {
                                 try {

@@ -1,7 +1,18 @@
 package F5BClient2;
 
 import F5BClient2.Pi_LCD_GPIO.Handler;
+import com.pi4j.io.serial.Baud;
+import com.pi4j.io.serial.DataBits;
+import com.pi4j.io.serial.FlowControl;
+import com.pi4j.io.serial.Parity;
+import com.pi4j.io.serial.Serial;
+import com.pi4j.io.serial.SerialConfig;
+import com.pi4j.io.serial.SerialDataEvent;
+import com.pi4j.io.serial.SerialDataEventListener;
+import com.pi4j.io.serial.SerialFactory;
+import com.pi4j.io.serial.StopBits;
 import com.pi4j.wiringpi.Lcd;
+import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.text.SimpleDateFormat;
 import javax.websocket.Endpoint;
@@ -9,7 +20,7 @@ import javax.websocket.EndpointConfig;
 import javax.websocket.MessageHandler;
 import javax.websocket.Session;
 
-public class SensorWebSocketClient extends Endpoint{
+public class SensorClient extends Endpoint{
     private Session session;
     private final Handler lcd_gpio_Handler;
     private final SimpleDateFormat formatter;
@@ -17,32 +28,109 @@ public class SensorWebSocketClient extends Endpoint{
     private String altitude;
     private long sensorReadTime;
     private int telemetryNOkCounter;
-    public boolean initialConnectOk;
+    public boolean serialConnectOk;
     private final int telemetryNotOkMaxCounter = 20;
+    byte[] message;
+    String originalValue;
     
-    SensorWebSocketClient(Handler lcd_gpio_Handler) {
+    SensorClient(Handler lcd_gpio_Handler) {
         //this.lcdHandle=lcdHandle;
         this.lcd_gpio_Handler = lcd_gpio_Handler;
         telemetryNOkCounter = 0;
         formatter = new SimpleDateFormat("HH:mm:ss");
         wMin = "N/A";
         altitude = "N/A";
-        initialConnectOk = false;
+        serialConnectOk = false;
         sensorReadTime = System.currentTimeMillis()-10000;  //init to something 10 secs ago
-        lcd_gpio_Handler.interrupt_Listener.interruptable_Thread2 = new Thread(){
+    }
+    
+    public void start() {
+        lcd_gpio_Handler.interrupt_Listener.interruptable_Thread = new Thread(){
             @Override
             public void run() {
                 try {
-                       //lcd_gpio_Handler.varioTest();
-                       while (!initialConnectOk) {
-                           System.out.println("initialConnect NOK!!");
-                           Thread.sleep(7000);
-                       }
-                       
+                    final Serial serial = SerialFactory.createInstance();
+                    serial.addListener(new SerialDataEventListener() {
+                        @Override
+                        public void dataReceived(SerialDataEvent event) {
+                            sensorReadTime = System.currentTimeMillis();
+                            try {
+                                System.out.println("[HEX DATA]   " + event.getHexByteString());
+                                //System.out.println("[Bytes]    " + event.getBytes());
+                                //System.out.println("[ASCII DATA] " + event.getAsciiString());
+                                
+                                //System.out.println("MessageTime: " + sensorReadTime);
+                                message = event.getBytes();
+                                originalValue = "";
+                                int l = message.length;
+                                for(int i = 0; i < l; i++) {
+                                   originalValue = originalValue + message[i]; 
+                                }
+                                System.out.println("Message: " + originalValue);  
+
+                                ByteBuffer unescapedMessage = unesc(message);
+                                unescapedMessage.flip();
+                                unescapedMessage.rewind();
+                                byte[] sens1 = new byte[3];
+                                byte[] sens2 = new byte[3];
+                                SensorReading sensValue1 = null;
+                                SensorReading sensValue2 = null;
+                                if (l > 19 && message[0] == 0x02 && message[l - 1] == 0x03 && checks(unescapedMessage)) {
+                                    System.out.println("Message OK");
+                                    unescapedMessage.rewind();
+                                    if (message[7] == 6) {
+                                        System.out.println("7th position of original message = 6, so telemetry is being received by transmitter");
+                                        unescapedMessage.position(8);
+                                        //Long when = timBytes.getWhen();
+
+                                        unescapedMessage.get(sens1, 0, 3);
+                                        sensValue1 = treatSensor(sens1);
+
+                                        unescapedMessage.get(sens2, 0, 3);
+                                        sensValue2 = treatSensor(sens2);
+                                    } else {
+                                        System.out.println("No telemetry from receiver!");
+                                        telemetryNotOkSetter();
+                                    }
+                                } else {
+                                    System.out.println("Message NOT OK");
+                                    telemetryNotOkSetter();
+                                }
+                                
+                            } catch (IOException e) {
+                                System.out.println("Error in Serial Listener...");
+                                e.printStackTrace();
+                            }
+                        }
+                    });
+                                        
                     while (true) {
+                        while (!serialConnectOk) {
+                            try {
+                                SerialConfig config = new SerialConfig();
+                                config.device("/dev/ttyUSB0")
+                                      .baud(Baud._115200)
+                                      .dataBits(DataBits._8)
+                                      .parity(Parity.NONE)
+                                      .stopBits(StopBits._1)
+                                      .flowControl(FlowControl.NONE);
+
+                                System.out.println(" Connecting to: " + config.toString() +" Data received on serial port will be displayed below.");
+
+                                // open the default serial device/port with the configuration settings
+                                serial.open(config);
+                                serialConnectOk = true;
+                                System.out.println("Serail Interface connected!...");
+                            }
+                            catch(IOException ex) {
+                                System.out.println(" ==>> SERIAL SETUP FAILED : " + ex.getMessage());
+                                Thread.sleep(1000);
+                            }
+                        }
+                                                
                         //System.out.println("TimeDiff: " + Long.toString(System.currentTimeMillis() - sensorReadTime));
                         if (System.currentTimeMillis() - sensorReadTime < 5000) {
-                            //System.out.println("Updating screen with WMin");
+                            System.out.println("Updating screen with WMin/Alt");
                             Lcd.lcdClear(lcd_gpio_Handler.lcdHandle);
                             Lcd.lcdPosition (lcd_gpio_Handler.lcdHandle, 0, 0);
                             Lcd.lcdPuts (lcd_gpio_Handler.lcdHandle, Handler.formatTextToFit1Line("WMin:" + wMin));
@@ -61,18 +149,17 @@ public class SensorWebSocketClient extends Endpoint{
                     }
                     
                 } catch (InterruptedException e) {
-                    System.out.println("Interrupted SensorWebSocketClient");
+                    System.out.println("Interrupted SensorClient");
                 }
             }
         };
-        lcd_gpio_Handler.interrupt_Listener.interruptable_Thread2.start();
-        //try {
-        //    lcd_gpio_Handler.interrupt_Listener.interruptable_Thread2.join();
-        //} catch (InterruptedException e) {
-        //}
+        lcd_gpio_Handler.interrupt_Listener.interruptable_Thread.start();
+        try {
+            lcd_gpio_Handler.interrupt_Listener.interruptable_Thread.join();
+        } catch (InterruptedException e) {
+        }
     }
     
-    @Override
     public void onOpen(Session sn, EndpointConfig ec) {
         //System.out.println("SensorWebSocketClient opened");
         this.session = sn;
