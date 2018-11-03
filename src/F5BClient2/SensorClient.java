@@ -88,7 +88,7 @@ public class SensorClient {
                                         unescapedMessage.get(sens2, 0, 3);
                                         sensValue2 = treatSensor(sens2);
                                     } else {
-                                        System.out.println("No telemetry from receiver!");
+                                        //System.out.println("No telemetry from receiver!");
                                         telemetryNotOkSetter();
                                     }
                                 } else {
