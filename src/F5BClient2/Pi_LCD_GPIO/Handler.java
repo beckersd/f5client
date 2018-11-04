@@ -19,14 +19,15 @@ public class Handler {
     
     public final static int PIEZO_PIN = 6;
 
+    private String version;
     public int lcdHandle;
     private final SimpleDateFormat formatter;
     
     public Interrupt_Listener interrupt_Listener;
     private String selectedOption;
     
-    public Handler() throws InterruptedException {
-        
+    public Handler(String version) throws InterruptedException {
+        this.version = version;
         Runtime.getRuntime().addShutdownHook(new Thread() {
             @Override
             public void run() {
@@ -148,7 +149,7 @@ public class Handler {
         // clear LCD
         Lcd.lcdClear(lcdHandle);
         
-        writeOneLineWithMinusBelow("-- F5B Client --");
+        write2Lines(formatTextToFit1Line("F5B Client"), formatTextToFit1Line(version));
         
         Lcd.lcdClear(lcdHandle);
     }

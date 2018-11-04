@@ -41,8 +41,8 @@ public class F5BClient2 {
     private String wifi;
     private String qual;
 
-    public void start() throws Exception {
-        lcd_gpio_Handler = new Handler();
+    public void start(String version) throws Exception {
+        lcd_gpio_Handler = new Handler(version);
         lcd_gpio_Handler.writeWelcome();
         
         
