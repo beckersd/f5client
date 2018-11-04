@@ -101,6 +101,7 @@ public class SensorPureJavaCommClient {
                                                 String data = "";
                                                 length = inputStr.available();
                                                 if (length > 0) {
+                                                    sensorReadTime = System.currentTimeMillis();
                                                     message = new byte[length];
                                                     inputStr.read(message);
                                                     System.out.println(System.currentTimeMillis() + "Data length: " + length + " / Data: " + message.toString());
@@ -148,7 +149,7 @@ public class SensorPureJavaCommClient {
                             });
 
                             while (serialConnectOk) {                           
-                                Thread.sleep(2000);    
+                                Thread.sleep(1000);    
                             }
                         }
                     }
