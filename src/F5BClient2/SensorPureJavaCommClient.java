@@ -51,8 +51,8 @@ public class SensorPureJavaCommClient {
         lcd_gpio_Handler.interrupt_Listener.interruptable_Thread = new Thread(){
             @Override
             public void run() {
-                try {
-                    while (true) {
+                while (true) {
+                    try {
                         while (!serialConnectOk) {
                             lcd_gpio_Handler.writeLineWithDate("Connecting Radio");
                             try {
@@ -149,22 +149,22 @@ public class SensorPureJavaCommClient {
                                 Thread.sleep(screenUpdateInterval);
                             }
                         }
+                    } catch (InterruptedException ex) {
+                        Logger.getLogger(SensorPureJavaCommClient.class.getName()).log(Level.SEVERE, null, ex);
+                    } catch (PortInUseException ex) {
+                        System.out.println("Port is in use");
+                        serialConnectOk = false;
+                    } catch (TooManyListenersException ex) {
+                        System.out.println("Too Many Listeners on port");
+                        serialConnectOk = false;
+                    } catch (UnsupportedCommOperationException ex) {
+                        System.out.println("Unsupported communication operation");
+                        serialConnectOk = false;
+                    } catch (IOException ex) {
+                        System.out.println("IOException");
+                        serialConnectOk = false;
                     }
-                } catch (InterruptedException ex) {
-                    Logger.getLogger(SensorPureJavaCommClient.class.getName()).log(Level.SEVERE, null, ex);
-                } catch (PortInUseException ex) {
-                    System.out.println("Port is in use");
-                    serialConnectOk = false;
-                } catch (TooManyListenersException ex) {
-                    System.out.println("Too Many Listeners on port");
-                    serialConnectOk = false;
-                } catch (UnsupportedCommOperationException ex) {
-                    System.out.println("Unsupported communication operation");
-                    serialConnectOk = false;
-                } catch (IOException ex) {
-                    System.out.println("IOException");
-                    serialConnectOk = false;
-                }   
+                }
             }   
         };
         
