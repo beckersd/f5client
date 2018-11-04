@@ -25,9 +25,9 @@ public class SensorPureJavaCommClient {
     private String altitude;
     private long sensorReadTime;
     private int telemetryNOkCounter;
-    public boolean serialConnectOk;
+    public boolean serialConnectOk = false;
     private final int telemetryNotOkMaxCounter = 20;
-    private final long screenUpdateInterval = 2000;
+    private final long screenUpdateInterval = 3000;
     byte[] message;
     String originalValue;
     
@@ -53,43 +53,27 @@ public class SensorPureJavaCommClient {
             public void run() {
                 try {
                     while (true) {
-                        lcd_gpio_Handler.writeLineWithDate("Connecting Radio");
-                        try {
-                            portId = CommPortIdentifier.getPortIdentifier("/dev/ttyUSB0");
-                        } catch (NoSuchPortException ex) {
-                            Logger.getLogger(SensorPureJavaCommClient.class.getName()).log(Level.SEVERE, null, ex);
-                            System.out.println("Unable to open port: " + ex.toString());
-                            Thread.sleep(1000);
-                        }
-                        if (portId != null) {
-                            System.out.println("Opening USB Port...");
-                            serialPort = (SerialPort) portId.open("MPXSerial", 2000);
-                            System.out.println("USB Port Open!");
-                               
-                            serialPort.setFlowControlMode(SerialPort.FLOWCONTROL_XONXOFF_IN+SerialPort.FLOWCONTROL_XONXOFF_OUT);
-                            serialPort.setSerialPortParams(115200, SerialPort.DATABITS_8, SerialPort.STOPBITS_1, SerialPort.PARITY_NONE);
-                            inputStr = serialPort.getInputStream();
-                            serialPort.notifyOnDataAvailable(true);
-                            serialConnectOk = true;
-             
-                            //System.out.println("TimeDiff: " + Long.toString(System.currentTimeMillis() - sensorReadTime));
-                            if (System.currentTimeMillis() - sensorReadTime < 2000) {
-                                //System.out.println("Updating screen with WMin/Alt");
-                                Lcd.lcdClear(lcd_gpio_Handler.lcdHandle);
-                                Lcd.lcdPosition (lcd_gpio_Handler.lcdHandle, 0, 0);
-                                Lcd.lcdPuts (lcd_gpio_Handler.lcdHandle, Handler.formatTextToFit1Line("WMin:" + wMin));
-                                Lcd.lcdPosition (lcd_gpio_Handler.lcdHandle, 0, 1);
-                                Lcd.lcdPuts (lcd_gpio_Handler.lcdHandle, Handler.formatTextToFit1Line("Alt:" + altitude));
-                                Thread.sleep(screenUpdateInterval);
-                            } else {
-                                Lcd.lcdClear(lcd_gpio_Handler.lcdHandle);
-                                Lcd.lcdPosition (lcd_gpio_Handler.lcdHandle, 0, 0);
-                                Lcd.lcdPuts (lcd_gpio_Handler.lcdHandle, Handler.formatTextToFit1Line("Last WMin:" + wMin));
-                                Lcd.lcdPosition (lcd_gpio_Handler.lcdHandle, 0, 1);
-                                Lcd.lcdPuts (lcd_gpio_Handler.lcdHandle, Handler.formatTextToFit1Line("Sensor Dead"));
-                                Thread.sleep(screenUpdateInterval);
+                        while (!serialConnectOk) {
+                            lcd_gpio_Handler.writeLineWithDate("Connecting Radio");
+                            try {
+                                portId = CommPortIdentifier.getPortIdentifier("/dev/ttyUSB0");
+                            } catch (NoSuchPortException ex) {
+                                Logger.getLogger(SensorPureJavaCommClient.class.getName()).log(Level.SEVERE, null, ex);
+                                System.out.println("Unable to open port: " + ex.toString());
+                                Thread.sleep(1000);
                             }
-                                
+                            if (portId != null) {
+                                System.out.println("Opening USB Port...");
+                                serialPort = (SerialPort) portId.open("MPXSerial", 2000);
+                                System.out.println("USB Port Open!");
+
+                                serialPort.setFlowControlMode(SerialPort.FLOWCONTROL_XONXOFF_IN+SerialPort.FLOWCONTROL_XONXOFF_OUT);
+                                serialPort.setSerialPortParams(115200, SerialPort.DATABITS_8, SerialPort.STOPBITS_1, SerialPort.PARITY_NONE);
+                                inputStr = serialPort.getInputStream();
+                                serialPort.notifyOnDataAvailable(true);
+                                serialConnectOk = true;
+                            }
+
                             serialPort.addEventListener(new SerialPortEventListener() {
                                 @Override                                
                                 public void serialEvent(SerialPortEvent event) {
@@ -105,7 +89,7 @@ public class SensorPureJavaCommClient {
                                                     message = new byte[length];
                                                     inputStr.read(message);
                                                     System.out.println(System.currentTimeMillis() + "Data length: " + length + " / Data: " + message.toString());
-                                                    
+
                                                     ByteBuffer unescapedMessage = unesc(message);
                                                     unescapedMessage.flip();
                                                     unescapedMessage.rewind();
@@ -134,7 +118,6 @@ public class SensorPureJavaCommClient {
                                                     }    
                                                 }
                                                 break;
-
                                             default:
                                                 System.out.println("No data available");
                                                 break;
@@ -147,9 +130,23 @@ public class SensorPureJavaCommClient {
                                     }
                                 }                    
                             });
-
-                            while (serialConnectOk) {                           
-                                Thread.sleep(1000);    
+                        
+                            //System.out.println("TimeDiff: " + Long.toString(System.currentTimeMillis() - sensorReadTime));
+                            if (System.currentTimeMillis() - sensorReadTime < 2000) {
+                                //System.out.println("Updating screen with WMin/Alt");
+                                Lcd.lcdClear(lcd_gpio_Handler.lcdHandle);
+                                Lcd.lcdPosition (lcd_gpio_Handler.lcdHandle, 0, 0);
+                                Lcd.lcdPuts (lcd_gpio_Handler.lcdHandle, Handler.formatTextToFit1Line("WMin:" + wMin));
+                                Lcd.lcdPosition (lcd_gpio_Handler.lcdHandle, 0, 1);
+                                Lcd.lcdPuts (lcd_gpio_Handler.lcdHandle, Handler.formatTextToFit1Line("Alt:" + altitude));
+                                Thread.sleep(screenUpdateInterval);
+                            } else {
+                                Lcd.lcdClear(lcd_gpio_Handler.lcdHandle);
+                                Lcd.lcdPosition (lcd_gpio_Handler.lcdHandle, 0, 0);
+                                Lcd.lcdPuts (lcd_gpio_Handler.lcdHandle, Handler.formatTextToFit1Line("Last WMin:" + wMin));
+                                Lcd.lcdPosition (lcd_gpio_Handler.lcdHandle, 0, 1);
+                                Lcd.lcdPuts (lcd_gpio_Handler.lcdHandle, Handler.formatTextToFit1Line("Sensor Dead"));
+                                Thread.sleep(screenUpdateInterval);
                             }
                         }
                     }
