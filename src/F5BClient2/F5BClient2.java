@@ -32,7 +32,7 @@ public class F5BClient2 {
     
     private static WebSocketContainer container;
     private static F5WebSocketClient f5ClientEndpoint;
-    private static SensorPi4JClient sensorClient;
+    private static SensorPureJavaCommClient sensorClient;
     
     private enum ClientType {F5CLIENT, SENSORCLIENT}
     
@@ -203,7 +203,7 @@ public class F5BClient2 {
     }
     
     private void runVario() throws InterruptedException, URISyntaxException {
-        SensorPi4JClient sensorClient = new SensorPi4JClient(lcd_gpio_Handler);
+        SensorPureJavaCommClient sensorClient = new SensorPureJavaCommClient(lcd_gpio_Handler);
         sensorClient.start();
     }
     
