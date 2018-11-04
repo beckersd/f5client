@@ -204,10 +204,10 @@ public class SensorPureJavaCommClient {
     
     private SensorReading treatSensor(byte[] s) {
 
-        int addr=(int)((s[0]&0xff)>>>4);   // so byte[0] is type (between 0 and 13
-        if (addr<0 || addr>15) return null;   //"addr not between 0 and 15... whatever that would mean..."
+        int addr=(int)((s[0]&0xff)>>>4);   // so byte[0] is type (between 0 and 13)
+        if (addr<0 || addr>15) return null;   //addr not between 0 and 15... whatever that would mean...
         int cls=(int)(0xf & s[0]);
-        if (cls<=0 || cls>13) return null;   //"cls not between 0 and 13"
+        if (cls<=0 || cls>13) return null;   //cls not between 0 and 13
         
         short low=(short)(0xfe&s[1]);         //byte[1] = low value of the sensor
         short high=(short)((0xff&s[2])<<8);   //byte[2] = high value of the sensor
