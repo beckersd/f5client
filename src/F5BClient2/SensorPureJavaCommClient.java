@@ -25,6 +25,7 @@ public class SensorPureJavaCommClient {
     private long sensorReadTime;
     private int telemetryNOkCounter;
     public boolean serialConnectOk = false;
+    private boolean interrupted = false;
     private final int telemetryNotOkMaxCounter = 20;
     private final long screenUpdateInterval = 3000;
     private final String port = "/dev/ttyUSB0";
@@ -51,7 +52,7 @@ public class SensorPureJavaCommClient {
         lcd_gpio_Handler.interrupt_Listener.interruptable_Thread = new Thread() {
             @Override
             public void run() {
-                while (true) {
+                while (true && !interrupted) {
                     try {
                         while (!serialConnectOk) {
                             Lcd.lcdClear(lcd_gpio_Handler.lcdHandle);
@@ -169,7 +170,8 @@ public class SensorPureJavaCommClient {
                         System.out.println("USB Port Disconnected");
                         resetPort();
                     } catch (InterruptedException ex) {
-                        System.out.println("Interruption");
+                        System.out.println("Interrupted SensorClient");
+                        interrupted = true;
                         resetPort();
                     }
                 }
