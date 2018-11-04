@@ -16,7 +16,7 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.text.SimpleDateFormat;import javax.websocket.Session;
 
-public class SensorClient {
+public class SensorPi4JClient {
     private Session session;
     private final Handler lcd_gpio_Handler;
     private final SimpleDateFormat formatter;
@@ -30,7 +30,7 @@ public class SensorClient {
     byte[] message;
     String originalValue;
     
-    SensorClient(Handler lcd_gpio_Handler) {
+    SensorPi4JClient(Handler lcd_gpio_Handler) {
         //this.lcdHandle=lcdHandle;
         this.lcd_gpio_Handler = lcd_gpio_Handler;
         telemetryNOkCounter = 0;
