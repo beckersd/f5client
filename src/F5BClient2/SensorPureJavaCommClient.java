@@ -5,9 +5,8 @@ import com.pi4j.wiringpi.Lcd;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
-import java.text.SimpleDateFormat;import java.util.TooManyListenersException;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+import java.text.SimpleDateFormat;
+import java.util.TooManyListenersException;
 import javax.websocket.Session;
 import purejavacomm.CommPortIdentifier;
 import purejavacomm.NoSuchPortException;
@@ -49,13 +48,17 @@ public class SensorPureJavaCommClient {
     }
     
     public void start() {
-        lcd_gpio_Handler.interrupt_Listener.interruptable_Thread = new Thread(){
+        lcd_gpio_Handler.interrupt_Listener.interruptable_Thread = new Thread() {
             @Override
             public void run() {
                 while (true) {
                     try {
                         while (!serialConnectOk) {
-                            lcd_gpio_Handler.writeLineWithDate("Connecting Radio");
+                            Lcd.lcdClear(lcd_gpio_Handler.lcdHandle);
+                            Lcd.lcdPosition (lcd_gpio_Handler.lcdHandle, 0, 0);
+                            Lcd.lcdPuts (lcd_gpio_Handler.lcdHandle, Handler.formatTextToFit1Line("Last WMin:" + wMin));
+                            Lcd.lcdPosition (lcd_gpio_Handler.lcdHandle, 0, 1);
+                            Lcd.lcdPuts (lcd_gpio_Handler.lcdHandle, Handler.formatTextToFit1Line("Connecting Radio"));
                             try {
                                 portId = CommPortIdentifier.getPortIdentifier(port);
                             } catch (NoSuchPortException ex) {
@@ -153,24 +156,21 @@ public class SensorPureJavaCommClient {
                             Thread.sleep(screenUpdateInterval);
                         }
                         
-                    } catch (InterruptedException ex) {
-                        Logger.getLogger(SensorPureJavaCommClient.class.getName()).log(Level.SEVERE, null, ex);
                     } catch (PortInUseException ex) {
                         System.out.println("Port is in use");
-                        serialConnectOk = false;
+                        resetPort();
                     } catch (TooManyListenersException ex) {
                         System.out.println("Too Many Listeners on port");
-                        serialConnectOk = false;
+                        resetPort();
                     } catch (UnsupportedCommOperationException ex) {
                         System.out.println("Unsupported communication operation");
-                        serialConnectOk = false;
+                        resetPort();
                     } catch (IOException ex) {
                         System.out.println("USB Port Disconnected");
-                        if (serialPort != null) {
-                            serialPort.close();
-                        }
-                        portId = null;
-                        serialConnectOk = false;
+                        resetPort();
+                    } catch (InterruptedException ex) {
+                        System.out.println("Interruption");
+                        resetPort();
                     }
                 }
             }   
@@ -182,7 +182,14 @@ public class SensorPureJavaCommClient {
         } catch (InterruptedException e) {
         }
     }      
-               
+      
+    private void resetPort() {
+        if (serialPort != null) {
+            serialPort.close();
+        }
+        portId = null;
+        serialConnectOk = false;
+    }
             
     private void telemetryNotOkSetter() {
         telemetryNOkCounter++;
