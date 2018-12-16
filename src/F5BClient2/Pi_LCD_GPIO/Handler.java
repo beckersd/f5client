@@ -229,7 +229,7 @@ public class Handler {
         playLongSound(1900);
     }
     
-    private void varioPlus3() {
+    public void varioPlus3() {
         playShortSound(1900);
         playShortSound(1900);
     }
@@ -242,7 +242,7 @@ public class Handler {
         playLongSound(200);
     }
     
-    private void varioMin3() {
+    public void varioMin3() {
         playShortSound(200);
         playShortSound(200);
     }

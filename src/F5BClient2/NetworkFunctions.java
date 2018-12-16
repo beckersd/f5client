@@ -9,6 +9,18 @@ import java.util.Enumeration;
 import java.util.LinkedList;
 
 public class NetworkFunctions {
+    
+    public static int getNumberOfConnectedClients() {
+        /*
+        iw dev wlan0 station dump
+        => gets the list of Stations
+        =>Substringing this on the tests "Station" get you the number of Stations connected
+        TODO:
+            Implement this. For now always returns 1 :)
+         */
+        
+        return 1;
+    }
 
     public static String getSSIDName() {
         String command = "sudo iwconfig";

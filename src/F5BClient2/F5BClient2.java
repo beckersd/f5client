@@ -210,7 +210,7 @@ public class F5BClient2 {
     private void client(String Connection) throws InterruptedException, URISyntaxException {
         container = ContainerProvider.getWebSocketContainer();
         
-        f5ClientEndpoint = new F5WebSocketClient(lcd_gpio_Handler.lcdHandle);
+        f5ClientEndpoint = new F5WebSocketClient(lcd_gpio_Handler.lcdHandle, lcd_gpio_Handler);
                 
         connection = new URI(Connection);
          

@@ -1,5 +1,6 @@
 package F5BClient2;
 
+import F5BClient2.Pi_LCD_GPIO.Handler;
 import com.pi4j.wiringpi.Lcd;
 import javax.websocket.Endpoint;
 import javax.websocket.EndpointConfig;
@@ -9,9 +10,11 @@ import javax.websocket.Session;
 public class F5WebSocketClient extends Endpoint{
     private Session session;
     private final int lcdHandle;
+    private final Handler lcd_gpio_Handler;
 
-    F5WebSocketClient(int lcdHandle) {
+    F5WebSocketClient(int lcdHandle, Handler lcdHandler) {
          this.lcdHandle=lcdHandle;
+         this.lcd_gpio_Handler=lcdHandler;
     }
     
     @Override
@@ -26,7 +29,23 @@ public class F5WebSocketClient extends Endpoint{
                 //splitting message in pilot, time and laps
                 String[] separated = message.split("/");
                 //System.out.println("Message0: " + separated[0]);
-                //System.out.println("Message1: " + separated[1]);
+                //System.out.println("Message1: $" + separated[1] + "$");
+                String secs = separated[1].trim();
+                //System.out.println("Secs: $" + secs + "$");
+                int secsInt = Integer.parseInt(secs);
+                //System.out.println("Secs: $" + secsInt + "$");
+                if (secsInt == 195) {
+                    //System.out.println("!!195!!");
+                    lcd_gpio_Handler.varioMin3();
+                }
+                if (secsInt == 198) {
+                    //System.out.println("!!198!!");
+                    lcd_gpio_Handler.varioMin3();
+                }
+                if (secsInt == 200) {
+                    //System.out.println("!!200!!");
+                    lcd_gpio_Handler.varioPlus3();
+                }
                 //System.out.println("Message2: " + separated[2]);
                 
                 Lcd.lcdClear(lcdHandle);
@@ -39,5 +58,4 @@ public class F5WebSocketClient extends Endpoint{
             }
         });
     }
-    
 }
