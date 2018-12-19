@@ -16,7 +16,7 @@ public class NetworkFunctions {
         => gets the list of Stations
         =>Substringing this on the tests "Station" get you the number of Stations connected
         TODO:
-            Implement this. For now always returns 1 :)
+            tested in jsch project. To be integrated here
          */
         
         return 1;
