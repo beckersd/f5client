@@ -30,7 +30,7 @@ public class NetworkFunctions {
     private static String numberOfClientsCommand = "sudo iw dev wlan0 station dump";
     private static String textToIdentifyConnectedClients = "Station";
     
-    public static boolean isUpdateFilePresent() throws JSchException, IOException {
+    private static Session connectToPi() throws JSchException {
         java.util.Properties config = new java.util.Properties(); 
         config.put("StrictHostKeyChecking", "no");
         System.out.println("SSHing into Pi...");
@@ -40,6 +40,11 @@ public class NetworkFunctions {
         session.setConfig(config);
         session.connect();
         System.out.println("Connected");
+        return session;
+    }
+    
+    public static boolean isUpdateFilePresent() throws JSchException, IOException {
+        Session session = connectToPi();
         
         System.out.println("Executing Look For File Command...");
         Channel channel=session.openChannel("exec");
@@ -78,15 +83,7 @@ public class NetworkFunctions {
     }
     
     public static void copyUpdateFile() throws JSchException, SftpException {
-        java.util.Properties config = new java.util.Properties(); 
-        config.put("StrictHostKeyChecking", "no");
-        System.out.println("SSHing into Pi...");
-        JSch jsch = new JSch();
-        Session session=jsch.getSession(user, host, 22);
-        session.setPassword(password);
-        session.setConfig(config);
-        session.connect();
-        System.out.println("Connected");
+        Session session = connectToPi();
         
         System.out.println("Copying file...");
         Channel channel = session.openChannel("sftp");
@@ -103,15 +100,7 @@ public class NetworkFunctions {
     }
     
     public static int getNumberOfConnectedClients() throws JSchException, IOException {
-        java.util.Properties config = new java.util.Properties(); 
-        config.put("StrictHostKeyChecking", "no");
-        System.out.println("SSHing into Pi...");
-        JSch jsch = new JSch();
-        Session session=jsch.getSession(user, host, 22);
-        session.setPassword(password);
-        session.setConfig(config);
-        session.connect();
-        System.out.println("Connected");
+        Session session = connectToPi();
         
         System.out.println("Executing Client Check Command...");
         Channel channel=session.openChannel("exec");
