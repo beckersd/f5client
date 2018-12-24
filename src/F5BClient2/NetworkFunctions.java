@@ -1,5 +1,14 @@
 package F5BClient2;
 
+import com.jcraft.jsch.Channel;
+import com.jcraft.jsch.ChannelExec;
+import com.jcraft.jsch.ChannelSftp;
+import com.jcraft.jsch.JSch;
+import com.jcraft.jsch.JSchException;
+import com.jcraft.jsch.Session;
+import com.jcraft.jsch.SftpException;
+import java.io.IOException;
+import java.io.InputStream;
 import java.net.Inet4Address;
 import java.net.InetAddress;
 import java.net.NetworkInterface;
@@ -10,16 +19,133 @@ import java.util.LinkedList;
 
 public class NetworkFunctions {
     
-    public static int getNumberOfConnectedClients() {
-        /*
-        iw dev wlan0 station dump
-        => gets the list of Stations
-        =>Substringing this on the tests "Station" get you the number of Stations connected
-        TODO:
-            tested in jsch project. To be integrated here
-         */
+    private static String host="1.1.1.2";
+    private static String user="pi";
+    private static String password="myPass1";
+    private static String lookForFileCommand = "ls /home/pi/NetBeansProjects/f5client2/dist/";
+    private static String remoteFolderName = "/home/pi/NetBeansProjects/f5client2/dist/";
+    private static String remoteFileName = "F5BClient2.jar";
+    private static String localFolderName = "/home/pi/NetBeansProjects/f5client2/dist/";
+    private static String localFileName = "F5BClient2.jar";
+    private static String numberOfClientsCommand = "sudo iw dev wlan0 station dump";
+    private static String textToIdentifyConnectedClients = "Station";
+    
+    public static boolean isUpdateFilePresent() throws JSchException, IOException {
+        java.util.Properties config = new java.util.Properties(); 
+        config.put("StrictHostKeyChecking", "no");
+        System.out.println("SSHing into Pi...");
+        JSch jsch = new JSch();
+        Session session=jsch.getSession(user, host, 22);
+        session.setPassword(password);
+        session.setConfig(config);
+        session.connect();
+        System.out.println("Connected");
         
-        return 1;
+        System.out.println("Executing Look For File Command...");
+        Channel channel=session.openChannel("exec");
+         ((ChannelExec)channel).setCommand(lookForFileCommand + remoteFileName);
+        channel.setInputStream(null);
+        ((ChannelExec)channel).setErrStream(System.err);
+
+        InputStream in=channel.getInputStream();
+        channel.connect();
+        byte[] tmp=new byte[1024];
+        String lsreturn = "";
+        while(true){
+          while(in.available()>0){
+            int i=in.read(tmp, 0, 1024);
+            if(i<0)break;
+            lsreturn = lsreturn + new String(tmp, 0, i);
+            lsreturn = lsreturn.trim();
+            //System.out.print("$" + lsreturn + "$");
+          }
+          if(channel.isClosed()){
+            System.out.println("exit-status: "+channel.getExitStatus());
+            break;
+          }
+          try{Thread.sleep(1000);}catch(Exception ee){}
+        }
+
+        System.out.println("Executing Command: DONE");
+        session.disconnect();
+
+        if (lsreturn.contains(remoteFileName)) {
+            System.out.println("File found!");
+            return true;
+        }
+        
+        return false;
+    }
+    
+    public static void copyUpdateFile() throws JSchException, SftpException {
+        java.util.Properties config = new java.util.Properties(); 
+        config.put("StrictHostKeyChecking", "no");
+        System.out.println("SSHing into Pi...");
+        JSch jsch = new JSch();
+        Session session=jsch.getSession(user, host, 22);
+        session.setPassword(password);
+        session.setConfig(config);
+        session.connect();
+        System.out.println("Connected");
+        
+        System.out.println("Copying file...");
+        Channel channel = session.openChannel("sftp");
+        channel.connect();
+        ChannelSftp sftpChannel = (ChannelSftp) channel;
+
+        sftpChannel.get(remoteFolderName + remoteFileName, localFolderName + localFileName);
+        sftpChannel.exit();  
+
+        System.out.println("Copying file: DONE");
+
+        session.disconnect();
+        
+    }
+    
+    public static int getNumberOfConnectedClients() throws JSchException, IOException {
+        java.util.Properties config = new java.util.Properties(); 
+        config.put("StrictHostKeyChecking", "no");
+        System.out.println("SSHing into Pi...");
+        JSch jsch = new JSch();
+        Session session=jsch.getSession(user, host, 22);
+        session.setPassword(password);
+        session.setConfig(config);
+        session.connect();
+        System.out.println("Connected");
+        
+        System.out.println("Executing Client Check Command...");
+        Channel channel=session.openChannel("exec");
+        ((ChannelExec)channel).setCommand(numberOfClientsCommand);
+        channel.setInputStream(null);
+        ((ChannelExec)channel).setErrStream(System.err);
+
+        InputStream in=channel.getInputStream();
+        channel.connect();
+        byte[] tmp=new byte[1024];
+        String lsreturn = "";
+        while(true){
+          while(in.available()>0){
+            int i=in.read(tmp, 0, 1024);
+            if(i<0)break;
+            lsreturn = lsreturn + new String(tmp, 0, i);
+            lsreturn = lsreturn.trim();
+            //System.out.print("$" + lsreturn + "$");
+          }
+          if(channel.isClosed()){
+            System.out.println("exit-status: "+channel.getExitStatus());
+            break;
+          }
+          try{Thread.sleep(1000);}catch(Exception ee){}
+        }
+
+        channel.disconnect();
+        session.disconnect();
+        System.out.println("Client Check Command DONE");
+
+        int count = lsreturn.split(textToIdentifyConnectedClients, -1).length-1;
+        System.out.println("Number of Clients connected: " + count);
+        
+        return count;
     }
 
     public static String getSSIDName() {

@@ -76,8 +76,14 @@ public class Handler {
                         selectedOption = F5BClient2.TIME;
                         writeMenuOption(formatTextToFit1Line(F5BClient2.TIME));
                         
+                        selectedOption = F5BClient2.CLIENTCHECKER;
+                        writeMenuOption(formatTextToFit1Line(F5BClient2.CLIENTCHECKER));
+                        
                         selectedOption = F5BClient2.TESTSOUND;
                         writeMenuOption(formatTextToFit1Line(F5BClient2.TESTSOUND));
+                        
+                        selectedOption = F5BClient2.UPDATE;
+                        writeMenuOption(formatTextToFit1Line(F5BClient2.UPDATE));
                         
                         selectedOption = F5BClient2.EXIT;
                         writeMenuOption(formatTextToFit1Line(F5BClient2.EXIT));

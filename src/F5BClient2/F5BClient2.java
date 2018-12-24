@@ -1,6 +1,8 @@
 package F5BClient2;
 
 import F5BClient2.Pi_LCD_GPIO.Handler;
+import com.jcraft.jsch.JSchException;
+import com.jcraft.jsch.SftpException;
 import com.pi4j.wiringpi.SoftTone;
 
 import java.io.IOException;
@@ -8,6 +10,8 @@ import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.websocket.ContainerProvider;
 import javax.websocket.DeploymentException;
 import javax.websocket.Session;
@@ -23,6 +27,8 @@ public class F5BClient2 {
     public final static String TIME = "Time";
     public final static String VARIO = "Vario";
     public final static String TESTSOUND = "Sound Test";
+    public final static String UPDATE = "Update";
+    public final static String CLIENTCHECKER = "Check Clients";
     
     public final static String F5_CLIENT_CONNECTION_URI = "ws://f5.be/ws/client";
         
@@ -40,6 +46,7 @@ public class F5BClient2 {
     private String ip;   
     private String wifi;
     private String qual;
+    private int clients;
 
     public void start(String version) throws Exception {
         lcd_gpio_Handler = new Handler(version);
@@ -81,10 +88,22 @@ public class F5BClient2 {
                     System.out.println("Running " + VARIO + "...");
                     runVario();
                     break;
+                case CLIENTCHECKER :
+                    selecter = MENU_SELECTER;
+                    System.out.println("Running " + CLIENTCHECKER + "...");
+                    runClientChecker();
+                    break;
                 case TESTSOUND :
                     selecter = MENU_SELECTER;
                     System.out.println("Running " + TESTSOUND + "...");
                     runSoundTest();
+                    break;
+                case UPDATE :
+                    selecter = MENU_SELECTER;
+                    System.out.println("Running " + UPDATE + "...");
+                    if (runUpdate()) {
+                        selecter = EXIT;
+                    }
                     break;
             }
         }
@@ -205,6 +224,57 @@ public class F5BClient2 {
     private void runVario() throws InterruptedException, URISyntaxException {
         SensorPureJavaCommClient sensorClient = new SensorPureJavaCommClient(lcd_gpio_Handler);
         sensorClient.start();
+    }
+    
+    private boolean runUpdate() {
+        try {
+            lcd_gpio_Handler.writeLineWithDate("Update Check...");
+            boolean fileIsPresent = NetworkFunctions.isUpdateFilePresent();
+
+            if (fileIsPresent) {
+                lcd_gpio_Handler.writeLineWithDate("Update found!");
+                lcd_gpio_Handler.writeLineWithDate("Updating...");
+                NetworkFunctions.copyUpdateFile();
+                Thread.sleep(1000);
+                lcd_gpio_Handler.writeLineWithDate("Update Done!");
+                return true;
+                
+            } else {
+                 lcd_gpio_Handler.writeLineWithDate("No Update...");
+                 return false;
+            }
+        } catch (JSchException | SftpException | IOException | InterruptedException e) {
+            System.out.println("Error in runUpdate: " + e.getLocalizedMessage());
+            return false;
+        }
+    }
+    
+    private void runClientChecker () {
+        lcd_gpio_Handler.interrupt_Listener.interruptable_Thread = new Thread(){
+            public void run() {
+                try{
+                    while (true) {
+                        lcd_gpio_Handler.writeLineWithDate("Running Check...");
+                        clients=NetworkFunctions.getNumberOfConnectedClients();
+                        lcd_gpio_Handler.writeLineWithDate("# Clients:" + clients);
+                        Thread.sleep(2000);
+                    }
+                } catch (InterruptedException ie) {
+                    System.out.println("Interrupted " + CLIENTCHECKER);
+                } catch (JSchException ex) {
+                    Logger.getLogger(F5BClient2.class.getName()).log(Level.SEVERE, null, ex);
+                } catch (IOException ex) {
+                    Logger.getLogger(F5BClient2.class.getName()).log(Level.SEVERE, null, ex);
+                }
+            }
+        };
+        
+        lcd_gpio_Handler.interrupt_Listener.interruptable_Thread.start();
+        
+        try {
+            lcd_gpio_Handler.interrupt_Listener.interruptable_Thread.join();
+        } catch (InterruptedException e) {
+        }                  
     }
     
     private void client(String Connection) throws InterruptedException, URISyntaxException {
