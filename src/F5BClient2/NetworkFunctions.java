@@ -38,7 +38,7 @@ public class NetworkFunctions {
         Session session=jsch.getSession(user, host, 22);
         session.setPassword(password);
         session.setConfig(config);
-        session.connect();
+        session.connect(5000);
         System.out.println("Connected");
         return session;
     }
@@ -100,7 +100,14 @@ public class NetworkFunctions {
     }
     
     public static int getNumberOfConnectedClients() throws JSchException, IOException {
-        Session session = connectToPi();
+        Session session = null;
+        try {
+            session = connectToPi();
+        } catch (JSchException j) { 
+        }
+        if (session == null) {
+            return 0;
+        }
         
         System.out.println("Executing Client Check Command...");
         Channel channel=session.openChannel("exec");
@@ -132,7 +139,7 @@ public class NetworkFunctions {
         System.out.println("Client Check Command DONE");
 
         int count = lsreturn.split(textToIdentifyConnectedClients, -1).length-1;
-        System.out.println("Number of Clients connected: " + count);
+        //System.out.println("Number of Clients connected: " + count);
         
         return count;
     }
