@@ -64,43 +64,35 @@ public class F5BClient2 {
                     System.out.println("Menu selection: " + selecter);
                     break;
                 case NETWORK_CHECK :
-                    selecter = MENU_SELECTER;
-                    System.out.println("Running " + NETWORK_CHECK + "...");
+                    setSelecterAndDisplayMenuselection(NETWORK_CHECK);
                     networkCheck();
                     break;
                 case CLIENT :
-                    selecter = MENU_SELECTER;
-                    System.out.println("Running " + CLIENT + "...");
+                    setSelecterAndDisplayMenuselection(CLIENT);
                     client(F5_CLIENT_CONNECTION_URI);
                     break;
                 case SCANNER :
-                    selecter = MENU_SELECTER;
-                    System.out.println("Running " + SCANNER + "...");
+                    setSelecterAndDisplayMenuselection(SCANNER);
                     scanner();
                     break;
                 case TIME :
-                    selecter = MENU_SELECTER;
-                    System.out.println("Running " + TIME + "...");
+                    setSelecterAndDisplayMenuselection(TIME);
                     showTime();
                     break;
                 case VARIO :
-                    selecter = MENU_SELECTER;
-                    System.out.println("Running " + VARIO + "...");
+                    setSelecterAndDisplayMenuselection(VARIO);
                     runVario();
                     break;
                 case CLIENTCHECKER :
-                    selecter = MENU_SELECTER;
-                    System.out.println("Running " + CLIENTCHECKER + "...");
+                    setSelecterAndDisplayMenuselection(CLIENTCHECKER);
                     runClientChecker();
                     break;
                 case TESTSOUND :
-                    selecter = MENU_SELECTER;
-                    System.out.println("Running " + TESTSOUND + "...");
+                    setSelecterAndDisplayMenuselection(TESTSOUND);
                     runSoundTest();
                     break;
                 case UPDATE :
-                    selecter = MENU_SELECTER;
-                    System.out.println("Running " + UPDATE + "...");
+                    setSelecterAndDisplayMenuselection(UPDATE);
                     if (runUpdate()) {
                         selecter = EXIT;
                     }
@@ -108,12 +100,17 @@ public class F5BClient2 {
             }
         }
         
-        System.out.println("Stopping...");
+        System.out.println("Cleaning up...");
         lcd_gpio_Handler.writeStop();
         lcd_gpio_Handler.clearScreen();
         
         System.out.println("Exit program and stopping Pi");
         CommandLineFunctions.executeCommand("sudo poweroff");
+    }
+    
+    private void setSelecterAndDisplayMenuselection (String menuSelection) {
+        selecter = MENU_SELECTER;
+        System.out.println("Running " + menuSelection + "...");
     }
     
     private void showTime() {
