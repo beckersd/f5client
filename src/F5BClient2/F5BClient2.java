@@ -231,7 +231,7 @@ public class F5BClient2 {
             if (fileIsPresent) {
                 lcd_gpio_Handler.writeLineWithDate("Update found!");
                 lcd_gpio_Handler.writeLineWithDate("Updating...");
-                NetworkFunctions.copyUpdateFile();
+                NetworkFunctions.downloadUpdateFile();
                 Thread.sleep(1000);
                 lcd_gpio_Handler.writeLineWithDate("Update Done!");
                 return true;

@@ -7,6 +7,9 @@ import com.jcraft.jsch.JSch;
 import com.jcraft.jsch.JSchException;
 import com.jcraft.jsch.Session;
 import com.jcraft.jsch.SftpException;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.Inet4Address;
@@ -82,19 +85,49 @@ public class NetworkFunctions {
         return false;
     }
     
-    public static void copyUpdateFile() throws JSchException, SftpException {
+    public static void downloadUpdateFile() throws JSchException, SftpException {
         Session session = connectToPi();
         
-        System.out.println("Copying file...");
+        System.out.println("Downloading file...");
         Channel channel = session.openChannel("sftp");
         channel.connect();
         ChannelSftp sftpChannel = (ChannelSftp) channel;
 
         sftpChannel.get(remoteFolderName + remoteFileName, localFolderName + localFileName);
         sftpChannel.exit();  
+        channel.disconnect();
 
         System.out.println("Copying file: DONE");
 
+        session.disconnect();
+        
+    }
+    
+    public static void uploadUpdateFile() throws JSchException, SftpException, FileNotFoundException {
+        //TODO initial test for this function... still to integrate
+        Session session = connectToPi();
+          
+        System.out.println("Uploading file...");
+        Channel channel = session.openChannel("sftp");
+        channel.connect();
+        ChannelSftp sftpChannel = (ChannelSftp) channel;
+        
+        //
+        // Change to the remote directory
+        //
+        System.out.println("Changing to FTP remote dir: " + remoteFolderName);
+        sftpChannel.cd(remoteFolderName);
+
+        //
+        // Send the file we generated
+        //
+        File f = new File(localFolderName + localFileName);
+        System.out.println("Storing file as remote filename: " + f.getName());
+        sftpChannel.put(new FileInputStream(f), f.getName());
+
+        sftpChannel.exit();
+        channel.disconnect();
+        
         session.disconnect();
         
     }
