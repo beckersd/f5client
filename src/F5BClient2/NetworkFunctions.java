@@ -6,6 +6,7 @@ import com.jcraft.jsch.ChannelSftp;
 import com.jcraft.jsch.JSch;
 import com.jcraft.jsch.JSchException;
 import com.jcraft.jsch.Session;
+import com.jcraft.jsch.SftpATTRS;
 import com.jcraft.jsch.SftpException;
 import java.io.File;
 import java.io.FileInputStream;
@@ -112,6 +113,20 @@ public class NetworkFunctions {
         channel.connect();
         ChannelSftp sftpChannel = (ChannelSftp) channel;
         
+        SftpATTRS attrs=null;
+        try {
+            attrs = sftpChannel.stat(remoteFolderName);
+        } catch (Exception e) {
+            System.out.println(remoteFolderName + " not found");
+        }
+
+        if (attrs != null) {
+            System.out.println("Directory exists IsDir = "+attrs.isDir());
+        } else {
+            System.out.println("Creating dir " + remoteFolderName);
+            sftpChannel.mkdir(remoteFolderName);
+        }
+
         //
         // Change to the remote directory
         //
