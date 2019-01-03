@@ -20,12 +20,11 @@ import java.net.SocketException;
 import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.LinkedList;
+import java.util.Properties;
+import java.util.ResourceBundle;
 
 public class NetworkFunctions {
     
-    private static String host="1.1.1.2";
-    private static String user="pi";
-    private static String password="myPass1";
     private static String lookForFileCommand = "ls /home/pi/NetBeansProjects/f5client2/dist/";
     private static String remoteFolderName = "/home/pi/NetBeansProjects/f5client2/dist/";
     private static String remoteFileName = "F5BClient2.jar";
@@ -35,8 +34,15 @@ public class NetworkFunctions {
     private static String textToIdentifyConnectedClients = "Station";
     
     private static Session connectToPi() throws JSchException {
-        java.util.Properties config = new java.util.Properties(); 
+        Properties config = new java.util.Properties(); 
         config.put("StrictHostKeyChecking", "no");
+        
+        ResourceBundle piConfig = ResourceBundle.getBundle("resources.config");
+        String host = piConfig.getString("host");
+        String user = piConfig.getString("user");
+        String password = piConfig.getString("password");
+        System.out.println(host);
+        
         System.out.println("SSHing into Pi...");
         JSch jsch = new JSch();
         Session session=jsch.getSession(user, host, 22);
@@ -106,6 +112,7 @@ public class NetworkFunctions {
     
     public static void uploadUpdateFile() throws JSchException, SftpException, FileNotFoundException {
         //TODO initial test for this function... still to integrate
+                     
         Session session = connectToPi();
           
         System.out.println("Uploading file...");
@@ -123,6 +130,7 @@ public class NetworkFunctions {
         if (attrs != null) {
             System.out.println("Directory exists IsDir = "+attrs.isDir());
         } else {
+            //TODO recursive dir creation does not work yet... so below only work if last dir does not exist...
             System.out.println("Creating dir " + remoteFolderName);
             sftpChannel.mkdir(remoteFolderName);
         }
@@ -134,8 +142,9 @@ public class NetworkFunctions {
         sftpChannel.cd(remoteFolderName);
 
         //
-        // Send the file we generated
+        // Send the file
         //
+        //TODO check if file exists ;-)
         File f = new File(localFolderName + localFileName);
         System.out.println("Storing file as remote filename: " + f.getName());
         sftpChannel.put(new FileInputStream(f), f.getName());
