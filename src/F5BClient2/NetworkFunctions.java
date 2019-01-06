@@ -3,6 +3,7 @@ package F5BClient2;
 import com.jcraft.jsch.Channel;
 import com.jcraft.jsch.ChannelExec;
 import com.jcraft.jsch.ChannelSftp;
+import com.jcraft.jsch.ChannelSftp.LsEntry;
 import com.jcraft.jsch.JSch;
 import com.jcraft.jsch.JSchException;
 import com.jcraft.jsch.Session;
@@ -22,6 +23,7 @@ import java.util.Enumeration;
 import java.util.LinkedList;
 import java.util.Properties;
 import java.util.ResourceBundle;
+import java.util.Vector;
 
 public class NetworkFunctions {
     
@@ -130,9 +132,27 @@ public class NetworkFunctions {
         if (attrs != null) {
             System.out.println("Directory exists IsDir = "+attrs.isDir());
         } else {
-            //TODO recursive dir creation does not work yet... so below only work if last dir does not exist...
-            System.out.println("Creating dir " + remoteFolderName);
-            sftpChannel.mkdir(remoteFolderName);
+            System.out.println("Creating full dir " + remoteFolderName);
+            String[] folders = remoteFolderName.split("/");
+            if (folders[0].isEmpty()) folders[0] = "/";
+            String fullPath = folders[0];
+            for (int i = 1; i < folders.length; i++) {
+                Vector ls = sftpChannel.ls(fullPath);
+                boolean isExist = false;
+                for (Object o : ls) {
+                    if (o instanceof LsEntry) {
+                        LsEntry e = (LsEntry) o;
+                        if (e.getAttrs().isDir() && e.getFilename().equals(folders[i])) {
+                            isExist = true;
+                        }
+                    }
+                }
+                if (!isExist && !folders[i].isEmpty()) {
+                    System.out.println("Creating sub dir " + fullPath + folders[i]);
+                    sftpChannel.mkdir(fullPath + folders[i]); 
+                }
+                fullPath = fullPath + folders[i] + "/";
+            }
         }
 
         //
@@ -144,10 +164,10 @@ public class NetworkFunctions {
         //
         // Send the file
         //
-        //TODO check if file exists ;-)
         File f = new File(localFolderName + localFileName);
         System.out.println("Storing file as remote filename: " + f.getName());
         sftpChannel.put(new FileInputStream(f), f.getName());
+        System.out.println("Copying file: DONE");
 
         sftpChannel.exit();
         channel.disconnect();

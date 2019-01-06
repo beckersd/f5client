@@ -85,6 +85,9 @@ public class Handler {
                         selectedOption = F5BClient2.UPDATE;
                         writeMenuOption(formatTextToFit1Line(F5BClient2.UPDATE));
                         
+                        selectedOption = F5BClient2.UPLOAD;
+                        writeMenuOption(formatTextToFit1Line(F5BClient2.UPLOAD));
+                        
                         selectedOption = F5BClient2.EXIT;
                         writeMenuOption(formatTextToFit1Line(F5BClient2.EXIT));
                         

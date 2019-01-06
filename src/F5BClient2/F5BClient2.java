@@ -4,6 +4,7 @@ import F5BClient2.Pi_LCD_GPIO.Handler;
 import com.jcraft.jsch.JSchException;
 import com.jcraft.jsch.SftpException;
 import com.pi4j.wiringpi.SoftTone;
+import java.io.FileNotFoundException;
 
 import java.io.IOException;
 
@@ -28,6 +29,7 @@ public class F5BClient2 {
     public final static String VARIO = "Vario";
     public final static String TESTSOUND = "Sound Test";
     public final static String UPDATE = "Update";
+    public final static String UPLOAD = "Upload";
     public final static String CLIENTCHECKER = "Check Clients";
     
     public final static String F5_CLIENT_CONNECTION_URI = "ws://f5.be/ws/client";
@@ -96,6 +98,10 @@ public class F5BClient2 {
                     if (runUpdate()) {
                         selecter = EXIT;
                     }
+                    break;
+                case UPLOAD :
+                    setSelecterAndDisplayMenuselection(UPDATE);
+                    runUpload();
                     break;
             }
         }
@@ -221,6 +227,11 @@ public class F5BClient2 {
     private void runVario() throws InterruptedException, URISyntaxException {
         SensorPureJavaCommClient sensorClient = new SensorPureJavaCommClient(lcd_gpio_Handler);
         sensorClient.start();
+    }
+    
+    private void runUpload() throws InterruptedException, JSchException, SftpException, FileNotFoundException {
+        lcd_gpio_Handler.writeLineWithDate("Uploading...");
+        NetworkFunctions.uploadUpdateFile();
     }
     
     private boolean runUpdate() {
